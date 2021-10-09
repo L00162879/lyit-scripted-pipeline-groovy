@@ -1,11 +1,15 @@
 // shebang
 #!/usr/bin/env groovy
 
-// all global definitions and elements      
+// workspace is the current personal working directory as in Unix/Linux    
 def WORKSPACE = pwd()
+// defined environments as target in the Azure cloud
 def environments = ["development", "staging", "production"]
+// the project name
 def project = 'jenkins-scripting-java'
+// the GitHub API URL to retrieve all the branch names to support the multi-branch logic
 def branchApi = new URL("https://api.github.com/repos/L00162879/${project}/branches")
+// retrieves the brances
 def branches = new groovy.json.JsonSlurper().parse(branchApi.newReader())
 
 // this function sends build result notifications to Slack
@@ -24,6 +28,7 @@ def getEmailRecipients() {
 // node block - somehow mapped to a node machine acting as a jenkins node
 node ("jenkins-scripting-java") {     
 
+  // variables
   environment { 
       GIT_CREDENTIALS = ''
       BRANCH_NAME = 'main'
@@ -76,7 +81,7 @@ node ("jenkins-scripting-java") {
                 sh 'mvn compile'
             }, 'Static Analysis': {
                 stage("Analysis") {
-                    sh "./mvnw checkstyle:checkstyle"                    
+                    sh 'mvn checkstyle:checkstyle'                    
                     step([$class: 'CheckStylePublisher',
                       canRunOnFailed: true,
                       defaultEncoding: '',
@@ -135,7 +140,7 @@ node ("jenkins-scripting-java") {
             input "Deploy to Azure?"
           }
         }
-        
+        // deploy to Azure
         stage("Deploy to Azure targets") {
             def deployments = [:]
             environments.each { e ->
